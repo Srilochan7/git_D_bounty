@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Bounty Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            height: 100%;
+        }
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+                        url('https://wallpaperaccess.com/full/17350.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            margin-top: 1rem;
+            font-size: 16px;
+        }
+        .btn {
+            margin-top: 1rem;
+            padding: 10px 20px;
+            background-color: #ff9900;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #ff8800;
+        }
+        #loading, #error, #result {
+            display: none;
+            margin-top: 1rem;
+        }
+        #loading {
+            color: #ffdb4d;
+        }
+        #error {
+            color: #ff4d4d;
+        }
+        #result {
+            text-align: left;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+        .result-item {
+            margin: 0.5rem 0;
+        }
+        .character-name {
+            font-size: 1.5rem;
+            color: #ff9900;
+            margin-bottom: 0.5rem;
+        }
+        .bounty-amount {
+            font-size: 1.25rem;
+            color: #ffdb4d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>GitHub Bounty Calculator</h2>
+        <input type="text" placeholder="Enter GitHub username" id="github-username">
+        <button class="btn" onclick="CalculateBounty()">Calculate Bounty</button>
+        
+        <div id="loading">Calculating your bounty...</div>
+        <div id="error"></div>
+        <div id="result">
+            <div class="character-name"></div>
+            <div class="bounty-amount"></div>
+            <div class="result-item">Score: <span class="score"></span></div>
+            <div class="result-item">Repositories: <span class="repos"></span></div>
+            <div class="result-item">Followers: <span class="followers"></span></div>
+            <div class="result-item">Total Stars: <span class="stars"></span></div>
+        </div>
+    </div>
+
+    <script>
+    async function CalculateBounty() {
+        const username = document.getElementById('github-username').value.trim();
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const result = document.getElementById('result');
+
+        if (!username) {
+            error.textContent = 'Please enter your Github username';
+            error.style.display = 'block';
+            return;
+        }
+
+        loading.style.display = 'block';
+        error.style.display = 'none';
+        result.style.display = 'none';
+
+        try {
+            // Fetch user data
+            const userResponse = await fetch("https://api.github.com/users/${username}");
+            if (!userResponse.ok) throw new Error('User not found');
+            const userData = await userResponse.json();
+
+            // Fetch repositories
+            const reposResponse = await fetch("https://api.github.com/users/${username}/repos");
+            if (!reposResponse.ok) throw new Error('Could not fetch repositories');
+            const repos = await reposResponse.json();
+
+            // Calculate total stars
+            let totalStars = 0;
+            repos.forEach(repo => {
+                totalStars += repo.stargazers_count;
+            });
+
+            // Calculate total commits (approximation based on repos)
+            const totalCommits = repos.length * 50; // Rough estimate
+            const totalPullRequests = repos.length * 2; // Rough estimate
+            const totalIssues = repos.length * 3; // Rough estimate
+
+            // Calculate the total score
+            const score = (
+                (userData.public_repos * 10) +
+                (totalCommits * 5) +
+                (totalPullRequests * 15) +
+                (totalIssues * 5) +
+                (userData.followers * 5) +
+                (totalStars * 10)
+            );
+
+            const characters = [
+                  { "name": "Gol D. Roger", "bounty": "5,000,000,000", "minScore": 500 },
+                  { "name": "Edward Newgate (Whitebeard)", "bounty": "4,600,000,000", "minScore": 490 },
+                  { "name": "Silvers Rayleigh", "bounty": "2,500,000,000", "minScore": 480 },
+                  { "name": "Monkey D. Dragon", "bounty": "4,000,000,000", "minScore": 470 },
+                  { "name": "Shanks", "bounty": "4,000,000,000", "minScore": 460 },
+                  { "name": "Monkey D. Luffy", "bounty": "1,500,000,000", "minScore": 400 },
+                  { "name": "Kaido", "bounty": "4,600,000,000", "minScore": 390 },
+                  { "name": "Marshall D. Teach (Blackbeard)", "bounty": "2,247,600,000", "minScore": 380 },
+                  { "name": "Big Mom", "bounty": "4,388,000,000", "minScore": 370 },
+                  { "name": "Dracule Mihawk", "bounty": "1,000,000,000", "minScore": 360 },
+                  { "name": "Trafalgar D. Water Law", "bounty": "1,500,000,000", "minScore": 400 },
+                  { "name": "Eustass Kid", "bounty": "1,000,000,000", "minScore": 390 },
+                  { "name": "Crocodile", "bounty": "100,000,000", "minScore": 380 },
+                  { "name": "Yamato", "bounty": "1,000,000,000", "minScore": 370 },
+                  { "name": "Sabo", "bounty": "602,000,000", "minScore": 360 },
+                  { "name": "Donquixote Doflamingo", "bounty": "340,000,000", "minScore": 350 },
+                  { "name": "Roronoa Zoro", "bounty": "60,000,000", "minScore": 340 },
+                  { "name": "Sanji", "bounty": "330,000,000", "minScore": 330 },
+                  { "name": "Marco", "bounty": "1,000,000,000", "minScore": 320 },
+                  { "name": "Boa Hancock", "bounty": "80,000,000", "minScore": 310 },
+                  { "name": "Ben Beckman", "bounty": "100,000,000", "minScore": 300 },
+                  { "name": "Jinbe", "bounty": "500,000,000", "minScore": 290 },
+                  { "name": "Katakuri", "bounty": "1,057,000,000", "minScore": 280 },
+                  { "name": "Brook", "bounty": "383,000,000", "minScore": 270 },
+                  { "name": "X Drake", "bounty": "222,222,222", "minScore": 260 },
+                  { "name": "King", "bounty": "1,390,000,000", "minScore": 250 },
+                  { "name": "Yamato", "bounty": "1,000,000,000", "minScore": 240 },
+                  { "name": "Jewelry Bonney", "bounty": "200,000,000", "minScore": 230 },
+                  { "name": "Franky", "bounty": "94,000,000", "minScore": 220 },
+                  { "name": "Nico Robin", "bounty": "130,000,000", "minScore": 210 },
+                  { "name": "Nami", "bounty": "66,000,000", "minScore": 200 },
+                  { "name": "Tony Tony Chopper", "bounty": "100", "minScore": 190 },
+                  { "name": "Coby", "bounty": "150,000,000", "minScore": 180 },
+                  { "name": "Bepo", "bounty": "100", "minScore": 170 },
+                  { "name": "Usopp", "bounty": "200,000,000", "minScore": 160 },
+                  { "name": "Gaimon", "bounty": "100", "minScore": 150 },
+                  { "name": "Trebol", "bounty": "100", "minScore": 140 },
+                  { "name": "Buggy", "bounty": "15,000,000", "minScore": 130 }
+            ];
+
+            const matchedCharacter = characters.find(char => score >= char.minScore) || characters[characters.length - 1];
+
+            // Display results
+            result.querySelector('.character-name').textContent = matchedCharacter.name;
+            result.querySelector('.bounty-amount').textContent = "₿${matchedCharacter.bounty}";
+            result.querySelector('.score').textContent = score.toFixed(2);
+            result.querySelector('.repos').textContent = userData.public_repos;
+            result.querySelector('.followers').textContent = userData.followers;
+            result.querySelector('.stars').textContent = totalStars;
+
+            result.style.display = 'block';
+
+        } catch (err) {
+            error.textContent = Error = "${err.message || 'Could not fetch GitHub data'}";
+            error.style.display = 'block';
+        } finally {
+            loading.style.display = 'none';
+        }
+    }
+    </script>
+</body>
+</html>
